@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, files, questions, InsertFile, InsertQuestion } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,37 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// File operations
+export async function createFile(file: InsertFile) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(files).values(file);
+  return result;
+}
+
+export async function getFilesByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(files).where(eq(files.userId, userId));
+}
+
+export async function getFileById(fileId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(files).where(eq(files.id, fileId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Question operations
+export async function createQuestions(questionList: InsertQuestion[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  if (questionList.length === 0) return;
+  await db.insert(questions).values(questionList);
+}
+
+export async function getQuestionsByFileId(fileId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(questions).where(eq(questions.fileId, fileId));
+}
